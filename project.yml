@@ -1,0 +1,69 @@
+name: Shimbashi
+options:
+  bundleIdPrefix: net.sanincodes
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+
+packages:
+  VoiceCore:
+    path: Packages/VoiceCore
+
+targets:
+  Shimbashi:
+    type: application
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: Shimbashi
+        excludes:
+          - "Info.plist"
+          - "ShimbashiTests/**"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.sanincodes.shimbashi
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Shimbashi/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_PREVIEWS: YES
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 6G32VTXQ29
+    dependencies:
+      - package: VoiceCore
+
+  ShimbashiTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: Shimbashi/ShimbashiTests
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: net.sanincodes.shimbashiTests
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 6G32VTXQ29
+    dependencies:
+      - target: Shimbashi
+      - package: VoiceCore
+
+schemes:
+  Shimbashi:
+    build:
+      targets:
+        Shimbashi: all
+        ShimbashiTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - ShimbashiTests

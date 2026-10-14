@@ -1,0 +1,24 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.xcarchive
+
+# XcodeGen — the .xcodeproj is generated from project.yml, don't track the output
+*.xcodeproj
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+
+# Secrets — API keys must never be committed; they live in Keychain at runtime
+*.xcconfig.local
+Secrets.plist
