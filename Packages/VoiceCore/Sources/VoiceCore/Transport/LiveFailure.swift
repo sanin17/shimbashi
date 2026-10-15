@@ -42,27 +42,36 @@ enum LiveFailure: Sendable, Equatable {
         }
     }
 
-    static func classify(error: Error?, diagnostics: ChannelDiagnostics) -> LiveFailure {
-        switch diagnostics.httpStatus {
-        case 429?:
-            return .quotaExceeded
-        case 400?, 401?, 403?:
-            // A well-formed handshake rejected outright is, in practice, the
-            // key (or its project) — Google answers a bad key with 400.
+    /// - Parameter connectionWasHealthy: the connection had already received
+    ///   a message from the server before it ended. A key Google just
+    ///   accepted doesn't turn invalid minutes into a conversation, so once a
+    ///   connection has proven healthy, a later close is never reported as a
+    ///   key problem — only quota (which can genuinely run out mid-session),
+    ///   the network, or "other".
+    static func classify(
+        error: Error?,
+        diagnostics: ChannelDiagnostics,
+        connectionWasHealthy: Bool = false
+    ) -> LiveFailure {
+        if diagnostics.httpStatus == 429 { return .quotaExceeded }
+
+        if !connectionWasHealthy, let status = diagnostics.httpStatus, [400, 401, 403].contains(status) {
+            // A handshake rejected outright, before the socket ever opened:
+            // in practice the key (or its project) — Google answers a bad key
+            // with 400.
             return .invalidKey
-        default:
-            break
         }
 
         if let reason = diagnostics.closeReason?.lowercased() {
             let quotaHints = ["quota", "resource_exhausted", "resource exhausted", "rate limit"]
             if quotaHints.contains(where: reason.contains) { return .quotaExceeded }
-            let keyHints = ["api key", "api_key", "unauthenticated", "permission", "not valid"]
-            if keyHints.contains(where: reason.contains) { return .invalidKey }
+
+            // Only unambiguous auth wording, and only before the connection
+            // has worked: a generic "not valid" also appears in unrelated
+            // errors (e.g. a stale session-resumption handle).
+            let keyHints = ["api key", "api_key", "unauthenticated", "permission_denied", "permission denied"]
+            if !connectionWasHealthy, keyHints.contains(where: reason.contains) { return .invalidKey }
         }
-        // 1008 = policy violation, which is how auth/permission failures
-        // arrive once a socket is already open.
-        if diagnostics.closeCode == 1008 { return .invalidKey }
 
         if let urlError = error as? URLError {
             switch urlError.code {

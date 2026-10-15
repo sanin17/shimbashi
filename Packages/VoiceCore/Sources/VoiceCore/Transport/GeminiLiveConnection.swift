@@ -20,6 +20,10 @@ actor GeminiLiveConnection {
     /// Why the reader loop ended, set just before `events` finishes so a
     /// consumer that sees the stream end can ask what went wrong.
     private(set) var lastFailure: LiveFailure?
+    /// Set once any message has arrived: from then on this connection has
+    /// demonstrably worked, which rules out a rejected key as the reason it
+    /// later ended (see `LiveFailure.classify`).
+    private var hasReceivedMessage = false
 
     /// Safe to iterate from outside the actor without `await` — `AsyncStream`
     /// itself is `Sendable` and its iteration doesn't touch actor-isolated state.
@@ -69,6 +73,7 @@ actor GeminiLiveConnection {
             do {
                 while true {
                     let message = try await channel.receive()
+                    hasReceivedMessage = true
                     guard let data = Self.data(from: message) else { continue }
                     let decoded = try JSONDecoder().decode(LiveServerMessage.self, from: data)
                     let events = decoded.events()
@@ -81,7 +86,14 @@ actor GeminiLiveConnection {
                 debugLog("[DEBUG GeminiLiveConnection] reader loop failed: \(error)")
                 // Recorded before finishing the stream, so whoever sees the
                 // stream end can rely on it already being set.
-                lastFailure = LiveFailure.classify(error: error, diagnostics: channel.diagnostics)
+                let diagnostics = channel.diagnostics
+                lastFailure = LiveFailure.classify(
+                    error: error,
+                    diagnostics: diagnostics,
+                    connectionWasHealthy: hasReceivedMessage
+                )
+                // TEMPORARY DEBUG — the raw facts the classifier decided from.
+                debugLog("[DEBUG GeminiLiveConnection] close diagnostics: httpStatus=\(String(describing: diagnostics.httpStatus)) closeCode=\(String(describing: diagnostics.closeCode)) closeReason=\(String(describing: diagnostics.closeReason)) healthy=\(hasReceivedMessage) error=\(error) -> \(String(describing: lastFailure))")
                 eventContinuation.finish()
             }
         }

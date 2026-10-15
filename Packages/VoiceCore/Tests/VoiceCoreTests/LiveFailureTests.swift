@@ -7,11 +7,13 @@ import Foundation
         status: Int? = nil,
         code: Int? = nil,
         reason: String? = nil,
-        error: Error? = nil
+        error: Error? = nil,
+        healthy: Bool = false
     ) -> LiveFailure {
         LiveFailure.classify(
             error: error,
-            diagnostics: ChannelDiagnostics(httpStatus: status, closeCode: code, closeReason: reason)
+            diagnostics: ChannelDiagnostics(httpStatus: status, closeCode: code, closeReason: reason),
+            connectionWasHealthy: healthy
         )
     }
 
@@ -31,11 +33,31 @@ import Foundation
         #expect(classify(code: 1007, reason: "API key not valid. Please pass a valid API key.") == .invalidKey)
     }
 
-    @Test func quotaWinsOverPolicyViolationCode() {
-        // 1008 alone reads as a key problem, but an explicit quota reason
-        // on the same close must take precedence.
+    @Test func policyViolationCodeAloneIsNotAKeyProblem() {
+        // 1008 covers many unrelated server complaints; without wording
+        // that actually says "key", it must not be reported as one.
+        #expect(classify(code: 1008) == .other)
         #expect(classify(code: 1008, reason: "quota exceeded") == .quotaExceeded)
-        #expect(classify(code: 1008) == .invalidKey)
+    }
+
+    @Test func genericNotValidWordingIsNotAKeyProblem() {
+        // e.g. a stale session-resumption handle on reconnect.
+        #expect(classify(code: 1007, reason: "Session resumption handle is not valid") == .other)
+    }
+
+    @Test func aWorkingConnectionIsNeverBlamedOnTheKey() {
+        // Same signals that read as a bad key on a fresh connection...
+        #expect(classify(status: 403, healthy: false) == .invalidKey)
+        #expect(classify(reason: "API key not valid", healthy: false) == .invalidKey)
+        // ...mean something else once the connection has been talking.
+        #expect(classify(status: 403, healthy: true) == .other)
+        #expect(classify(reason: "API key not valid", healthy: true) == .other)
+        #expect(classify(code: 1008, reason: "permission denied", healthy: true) == .other)
+    }
+
+    @Test func quotaCanStillRunOutMidConversation() {
+        #expect(classify(code: 1011, reason: "You exceeded your current quota", healthy: true) == .quotaExceeded)
+        #expect(classify(status: 429, healthy: true) == .quotaExceeded)
     }
 
     @Test func offlineErrorsAreNetwork() {
