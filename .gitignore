@@ -22,3 +22,6 @@ xcuserdata/
 # Secrets — API keys must never be committed; they live in Keychain at runtime
 *.xcconfig.local
 Secrets.plist
+
+# Claude Code local settings (paths, permission rules) — never commit
+.claude/
