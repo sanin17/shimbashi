@@ -18,13 +18,47 @@ struct GeminiTextClient: GeminiTextGenerating {
     }
 
     let apiKey: String
-    private let session = URLSession(configuration: .default)
+    var session = URLSession(configuration: .default)
+    /// Pause before each retry after a transient failure; its length is also
+    /// the retry budget. The free tier throttles bursts (a reply finishing
+    /// can fire a translation, a breakdown and speech at once), and a
+    /// one-off 429/503 shouldn't surface as a red error the learner has to
+    /// tap through — a short wait nearly always clears it.
+    var retryDelays: [Duration] = [.milliseconds(700), .milliseconds(1800)]
 
     /// Low-latency, cost-effective model built for high-frequency, lightweight
     /// tasks like this one — not the same model the live conversation uses.
     private static let model = "gemini-3.1-flash-lite"
 
     func generate(system: String, userMessage: String) async throws -> String {
+        var delays = retryDelays[...]
+        while true {
+            do {
+                return try await attempt(system: system, userMessage: userMessage)
+            } catch {
+                guard Self.isTransient(error), let delay = delays.popFirst() else { throw error }
+                debugLog("[DEBUG GeminiTextClient] transient failure, retrying in \(delay): \(error)")
+                try await Task.sleep(for: delay)
+            }
+        }
+    }
+
+    /// Failures worth another try: throttling, server-side hiccups, a
+    /// dropped connection, or an empty reply. Anything else (a rejected key,
+    /// a malformed request) would fail identically, so it's surfaced at once.
+    static func isTransient(_ error: Error) -> Bool {
+        switch error {
+        case GeminiTextError.requestFailed(let status, _):
+            return [408, 429, 500, 502, 503, 504].contains(status)
+        case GeminiTextError.noTextContent:
+            return true
+        default:
+            if let urlError = error as? URLError { return urlError.code != .cancelled }
+            return false
+        }
+    }
+
+    private func attempt(system: String, userMessage: String) async throws -> String {
         // Key goes in a header rather than the query string so it can't
         // surface in a URLError's description or in URL logs.
         let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(Self.model):generateContent")!

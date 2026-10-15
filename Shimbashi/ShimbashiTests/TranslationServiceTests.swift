@@ -71,4 +71,45 @@ import Foundation
             try await service.analyzeReply("test")
         }
     }
+
+    @Test func malformedReplyIsRetriedOnce() async throws {
+        let fake = FakeTextGenerator(.results([
+            .success("sorry, here you go: [not json"),
+            .success(#"[{"japanese":"はい","romaji":"hai","english":"yes"}]"#),
+        ]))
+        let service = TranslationService(client: fake)
+        let phrases = try await service.breakdown("はい")
+        #expect(phrases.count == 1)
+        #expect(await fake.callCount == 2)
+    }
+
+    @Test func persistentlyMalformedReplyStopsAfterTwoAttempts() async {
+        let fake = FakeTextGenerator(.fixed("{still not valid json}"))
+        let service = TranslationService(client: fake)
+        await #expect(throws: (any Error).self) {
+            try await service.translate("test")
+        }
+        #expect(await fake.callCount == 2)
+    }
+
+    @Test func closerBeforeOpenerIsAnErrorNotACrash() async {
+        // `} ... {` makes first-opener come after last-closer; slicing that
+        // range used to trap instead of failing cleanly.
+        let fake = FakeTextGenerator(.fixed("} nothing useful {"))
+        let service = TranslationService(client: fake)
+        await #expect(throws: TranslationService.TranslationError.noJSONFound) {
+            try await service.translate("test")
+        }
+    }
+
+    @Test func clientFailureIsNotRetriedAtThisLayer() async {
+        // Transport retries live in the client; a thrown client error must
+        // surface immediately rather than being replayed here.
+        let fake = FakeTextGenerator(.throwing(GeminiTextClient.GeminiTextError.requestFailed(status: 400, body: "")))
+        let service = TranslationService(client: fake)
+        await #expect(throws: (any Error).self) {
+            try await service.translate("test")
+        }
+        #expect(await fake.callCount == 1)
+    }
 }

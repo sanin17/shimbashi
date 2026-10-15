@@ -95,35 +95,50 @@ struct TranslationService {
     """
 
     func analyzeReply(_ japanese: String) async throws -> ReplyAnalysis {
-        let raw = try await client.generate(system: Self.replyAnalysisSystemPrompt, userMessage: japanese)
-        guard let start = raw.firstIndex(of: "{"), let end = raw.lastIndex(of: "}") else {
-            throw TranslationError.noJSONFound
-        }
-        let json = raw[start...end]
-        guard let data = json.data(using: .utf8) else { throw TranslationError.noJSONFound }
-        return try JSONDecoder().decode(ReplyAnalysis.self, from: data)
+        try await generateDecoded(ReplyAnalysis.self, system: Self.replyAnalysisSystemPrompt, userMessage: japanese, open: "{", close: "}")
     }
 
     func translate(_ japanese: String) async throws -> TranslationResult {
-        let raw = try await client.generate(system: Self.systemPrompt, userMessage: japanese)
         // Slice out the JSON object rather than assuming the response has no
         // surrounding text or code fences — robust to minor model variance
         // without needing full structured-output plumbing for two fields.
-        guard let start = raw.firstIndex(of: "{"), let end = raw.lastIndex(of: "}") else {
-            throw TranslationError.noJSONFound
-        }
-        let json = raw[start...end]
-        guard let data = json.data(using: .utf8) else { throw TranslationError.noJSONFound }
-        return try JSONDecoder().decode(TranslationResult.self, from: data)
+        try await generateDecoded(TranslationResult.self, system: Self.systemPrompt, userMessage: japanese, open: "{", close: "}")
     }
 
     func breakdown(_ japanese: String) async throws -> [PhraseGloss] {
-        let raw = try await client.generate(system: Self.breakdownSystemPrompt, userMessage: japanese)
-        guard let start = raw.firstIndex(of: "["), let end = raw.lastIndex(of: "]") else {
-            throw TranslationError.noJSONFound
+        try await generateDecoded([PhraseGloss].self, system: Self.breakdownSystemPrompt, userMessage: japanese, open: "[", close: "]")
+    }
+
+    /// Asks the model, slices the JSON out of whatever surrounds it, and
+    /// decodes it. A reply that isn't valid JSON is the model's own
+    /// run-to-run variance, not something retrying the *same* request can't
+    /// fix, so it gets exactly one more try before the failure is surfaced
+    /// (transport-level failures are already retried inside the client).
+    private func generateDecoded<T: Decodable>(
+        _ type: T.Type,
+        system: String,
+        userMessage: String,
+        open: Character,
+        close: Character
+    ) async throws -> T {
+        var lastError: Error = TranslationError.noJSONFound
+        for _ in 0..<2 {
+            let raw = try await client.generate(system: system, userMessage: userMessage)
+            // `start <= end` matters: a reply with the closer before the
+            // opener would otherwise form an invalid range and trap.
+            guard let start = raw.firstIndex(of: open),
+                  let end = raw.lastIndex(of: close),
+                  start <= end,
+                  let data = String(raw[start...end]).data(using: .utf8) else {
+                lastError = TranslationError.noJSONFound
+                continue
+            }
+            do {
+                return try JSONDecoder().decode(T.self, from: data)
+            } catch {
+                lastError = error
+            }
         }
-        let json = raw[start...end]
-        guard let data = json.data(using: .utf8) else { throw TranslationError.noJSONFound }
-        return try JSONDecoder().decode([PhraseGloss].self, from: data)
+        throw lastError
     }
 }
