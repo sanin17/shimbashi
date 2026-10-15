@@ -11,8 +11,18 @@ struct APIKeySetupView: View {
     @State private var savedKey: String? = Keychain.load(.geminiAPIKey)
     @State private var newKey: String = ""
     @State private var confirmingRemoval = false
+    @State private var isChecking = false
+    @State private var problem: Problem?
     @Environment(\.dismiss) private var dismiss
     var onSave: (() -> Void)?
+    var validator = GeminiKeyValidator()
+
+    /// Why a key wasn't saved straight away. Every case offers "Save
+    /// Anyway" so a false negative (flaky connection, an odd response) can
+    /// never trap someone who knows their key is fine.
+    private struct Problem {
+        let message: String
+    }
 
     private var trimmedNewKey: String {
         newKey.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -34,6 +44,27 @@ struct APIKeySetupView: View {
                     SecureField("Paste Gemini API key", text: $newKey)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .disabled(isChecking)
+                        .onChange(of: newKey) { _, _ in problem = nil }
+
+                    if isChecking {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                            Text("Checking with Google…")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    if let problem {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(problem.message)
+                                .font(.footnote)
+                                .foregroundStyle(.red)
+                            Button("Save Anyway") { commit(trimmedNewKey) }
+                                .font(.footnote)
+                        }
+                    }
                 } header: {
                     Text(savedKey == nil ? "Add a Key" : "Replace Key")
                 } footer: {
@@ -60,13 +91,8 @@ struct APIKeySetupView: View {
                     Button("Close") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        guard !trimmedNewKey.isEmpty else { return }
-                        Keychain.save(trimmedNewKey, for: .geminiAPIKey)
-                        onSave?()
-                        dismiss()
-                    }
-                    .disabled(trimmedNewKey.isEmpty)
+                    Button("Save") { validateAndSave() }
+                        .disabled(trimmedNewKey.isEmpty || isChecking)
                 }
             }
             .confirmationDialog(
@@ -83,6 +109,39 @@ struct APIKeySetupView: View {
                 Text("Conversations won't work until you add a key again.")
             }
         }
+    }
+
+    /// Checks the key with Google first and only stores it once accepted;
+    /// a rejected or unverifiable key stays in the field with the reason
+    /// shown beneath it.
+    private func validateAndSave() {
+        let candidate = trimmedNewKey
+        guard !candidate.isEmpty, !isChecking else { return }
+        isChecking = true
+        problem = nil
+
+        Task {
+            let outcome = await validator.validate(candidate)
+            isChecking = false
+            switch outcome {
+            case .valid, .rateLimited:
+                // Rate-limited still means Google recognized the key.
+                commit(candidate)
+            case .rejected:
+                problem = Problem(message: "Google didn't accept this key. Make sure you copied the whole key from AI Studio, with no extra characters.")
+            case .unreachable:
+                problem = Problem(message: "Couldn't reach Google to check this key. Check your internet connection and try again, or save it anyway.")
+            case .unknown(let status):
+                problem = Problem(message: "Google gave an unexpected response (\(status)) while checking this key. You can try again or save it anyway.")
+            }
+        }
+    }
+
+    private func commit(_ key: String) {
+        guard !key.isEmpty else { return }
+        Keychain.save(key, for: .geminiAPIKey)
+        onSave?()
+        dismiss()
     }
 
     private func step(_ number: Int, _ text: String) -> some View {
