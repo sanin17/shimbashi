@@ -17,11 +17,13 @@ struct APIKeySetupView: View {
     var onSave: (() -> Void)?
     var validator = GeminiKeyValidator()
 
-    /// Why a key wasn't saved straight away. Every case offers "Save
-    /// Anyway" so a false negative (flaky connection, an odd response) can
-    /// never trap someone who knows their key is fine.
+    /// Why a key wasn't saved straight away. "Save Anyway" is offered only
+    /// when Google couldn't be asked or answered unexpectedly — a flaky
+    /// connection mustn't block a good key. A definite rejection never
+    /// offers it: that key would just fail on the conversation screen.
     private struct Problem {
         let message: String
+        let canSaveAnyway: Bool
     }
 
     private var trimmedNewKey: String {
@@ -61,8 +63,10 @@ struct APIKeySetupView: View {
                             Text(problem.message)
                                 .font(.footnote)
                                 .foregroundStyle(.red)
-                            Button("Save Anyway") { commit(trimmedNewKey) }
-                                .font(.footnote)
+                            if problem.canSaveAnyway {
+                                Button("Save Anyway") { commit(trimmedNewKey) }
+                                    .font(.footnote)
+                            }
                         }
                     }
                 } header: {
@@ -128,11 +132,11 @@ struct APIKeySetupView: View {
                 // Rate-limited still means Google recognized the key.
                 commit(candidate)
             case .rejected:
-                problem = Problem(message: "Google didn't accept this key. Make sure you copied the whole key from AI Studio, with no extra characters.")
+                problem = Problem(message: "Google didn't accept this key. Make sure you copied the whole key from AI Studio, with no extra characters.", canSaveAnyway: false)
             case .unreachable:
-                problem = Problem(message: "Couldn't reach Google to check this key. Check your internet connection and try again, or save it anyway.")
+                problem = Problem(message: "Couldn't reach Google to check this key. Check your internet connection and try again, or save it anyway.", canSaveAnyway: true)
             case .unknown(let status):
-                problem = Problem(message: "Google gave an unexpected response (\(status)) while checking this key. You can try again or save it anyway.")
+                problem = Problem(message: "Google gave an unexpected response (\(status)) while checking this key. You can try again or save it anyway.", canSaveAnyway: true)
             }
         }
     }
