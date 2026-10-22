@@ -95,6 +95,8 @@ actor GeminiLiveSession {
         components?.queryItems = [URLQueryItem(name: "key", value: apiKey)]
         guard let url = components?.url else { throw SessionError.invalidURL }
 
+        // TEMPORARY DEBUG
+        debugLog("[DEBUG GeminiLiveSession] connecting, model=\(config.model)")
         let channel = channelFactory(url)
         let newConnection = GeminiLiveConnection(channel: channel)
 

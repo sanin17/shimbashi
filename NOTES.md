@@ -4,9 +4,9 @@ An iOS app for practicing spoken Japanese with a live voice tutor.
 Voice-first: you talk, the tutor replies in Japanese, and the screen shows Japanese / romaji / English.
 Reading and writing are explicitly out of scope.
 
-**Single provider: Gemini only.** Gemini Live (`gemini-3.1-flash-live-preview`) drives the realtime voice
-conversation; `gemini-3.1-flash-lite` handles translation, phrase breakdown, and session summaries;
-`gemini-3.1-flash-tts-preview` handles replay TTS. An earlier design split work between Gemini and Claude —
+**Single provider: Gemini only.** Gemini Live (`gemini-3.8-live`) drives the realtime voice
+conversation; `gemini-3.5-flash-lite` (falling back to `gemini-3.6-flash`) handles translation, phrase breakdown, and session summaries;
+`gemini-3.8-flash-tts` (falling back to `gemini-3.8-flash-lite-tts`) handles replay TTS. An earlier design split work between Gemini and Claude —
 that was dropped early on and never came back. There is no `ClaudeClient` in this codebase.
 
 ---

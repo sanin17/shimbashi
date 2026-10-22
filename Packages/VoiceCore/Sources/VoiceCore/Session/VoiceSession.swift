@@ -250,7 +250,8 @@ public final class VoiceSession {
     private func handle(_ event: LiveServerEvent) {
         switch event {
         case .setupComplete:
-            break
+            // TEMPORARY DEBUG
+            debugLog("[DEBUG VoiceSession] setupComplete — server accepted the session setup")
 
         case .inputTranscriptionDelta(let text):
             // TEMPORARY DEBUG

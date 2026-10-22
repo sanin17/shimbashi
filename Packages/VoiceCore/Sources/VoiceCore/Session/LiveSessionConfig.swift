@@ -16,7 +16,7 @@ public struct LiveSessionConfig: Sendable {
     public var noiseResistance: Double
 
     public init(
-        model: String = "models/gemini-3.1-flash-live-preview",
+        model: String = "models/gemini-3.8-live",
         systemInstruction: String? = nil,
         voiceName: String? = nil,
         noiseResistance: Double = 0
