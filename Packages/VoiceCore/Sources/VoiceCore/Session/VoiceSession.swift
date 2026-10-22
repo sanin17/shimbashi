@@ -140,6 +140,14 @@ public final class VoiceSession {
     public func endConversation() async {
         // TEMPORARY DEBUG
         debugLog("[DEBUG VoiceSession] endConversation() called, phase=\(phase)")
+        // A deliberate end must never be mistaken for a dropped connection.
+        // Tearing down finishes the event stream, and the pump that watches
+        // it would otherwise run its "stream ended unexpectedly" branch
+        // *after* this method sets `.idle` below, leaving the session
+        // `.failed("Connection closed")` — shown as a red error when the
+        // learner just locked their phone. Bumping the generation retires
+        // that pump first.
+        generation += 1
         if isRecording {
             await endTurn()
         }
