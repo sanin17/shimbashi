@@ -256,7 +256,7 @@ public final class VoiceSession {
         case .inputTranscriptionDelta(let text):
             // TEMPORARY DEBUG
             debugLog("[DEBUG VoiceSession] inputTranscriptionDelta: \"\(text)\" (partialUserText was: \"\(partialUserText)\")")
-            partialUserText += text
+            partialUserText = (partialUserText + text).removingSpacesBetweenJapanese
 
         case .outputTranscriptionDelta(let text):
             // The model starting to talk is the signal the user's turn ended
@@ -264,7 +264,7 @@ public final class VoiceSession {
             finalizeUserTurnIfNeeded()
             // TEMPORARY DEBUG
             debugLog("[DEBUG VoiceSession] outputTranscriptionDelta: \"\(text)\" (partialModelText was: \"\(partialModelText)\")")
-            partialModelText += text
+            partialModelText = (partialModelText + text).removingSpacesBetweenJapanese
 
         case .modelAudio(let data):
             engine.enqueuePlayback(data)
