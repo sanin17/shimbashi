@@ -16,8 +16,3 @@ Reports about any of these are especially welcome:
   Google's API (over HTTPS, in a header)
 - Audio being captured or sent outside a Start/Stop turn
 - Conversation history leaving the device
-
-## Secrets in this repository
-
-No keys, tokens, certificates, or credentials belong in this repository, and none are committed. The
-app has no server, so there is nothing to configure. If you ever spot one, please report it as above.
