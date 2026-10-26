@@ -251,8 +251,8 @@ public final class VoiceIOEngine {
     private func observeSessionEvents() {
         sessionEventTask = Task { [weak self] in
             guard let self else { return }
-            for await event in await self.session.events() {
-                await self.handle(event)
+            for await event in self.session.events() {
+                self.handle(event)
             }
         }
     }
