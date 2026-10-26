@@ -43,13 +43,6 @@ struct RootView: View {
                     SettingsView()
                 }
                 .font(.footnote)
-
-                #if DEBUG
-                NavigationLink("Audio Loopback Test") {
-                    AudioLoopbackTestView()
-                }
-                .font(.footnote)
-                #endif
             }
             .navigationTitle("Shimbashi")
             // The key can change from Settings or a conversation's failure
