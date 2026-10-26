@@ -31,6 +31,11 @@ actor GeminiLiveSession {
     /// can't help (bad key, quota) or the retry budget ran out. `nil` for a
     /// deliberate stop. Read by `VoiceSession` when `events` finishes.
     private(set) var terminalFailure: LiveFailure?
+    /// What's already been said in this conversation, supplied before
+    /// `start()` when this is a *new* connection into an ongoing one. Folded
+    /// into the system instruction on a connection that has no resumption
+    /// handle; a resumed connection already carries the server's own memory.
+    private var priorContext: String?
     private var lastObservedFailure: LiveFailure?
     private var reconnectDeadlineTask: Task<Void, Never>?
     private var isStopped = false
@@ -73,8 +78,17 @@ actor GeminiLiveSession {
         self.eventContinuation = continuation
     }
 
+    func setPriorContext(_ text: String?) {
+        priorContext = text
+    }
+
     func start() async throws {
         guard connection == nil else { throw SessionError.alreadyStarted }
+        // A start() is a brand-new session. A handle left over from the one
+        // before is only meant for reconnecting that same live session, and
+        // the server won't (or shouldn't) resume a session we closed — so
+        // memory of earlier turns comes from `priorContext`, not from it.
+        resumptionHandle = nil
         isStopped = false
         isReconnecting = false
         reconnectAttempts = 0
@@ -96,7 +110,7 @@ actor GeminiLiveSession {
         guard let url = components?.url else { throw SessionError.invalidURL }
 
         // TEMPORARY DEBUG
-        debugLog("[DEBUG GeminiLiveSession] connecting, model=\(config.model)")
+        debugLog("[DEBUG GeminiLiveSession] connecting, model=\(config.model), resuming=\(resumptionHandle != nil), priorContextChars=\(resumptionHandle == nil ? (priorContext?.count ?? 0) : 0)")
         let channel = channelFactory(url)
         let newConnection = GeminiLiveConnection(channel: channel)
 
@@ -104,7 +118,11 @@ actor GeminiLiveSession {
             model: config.model,
             generationConfig: .init(speechConfig: config.voiceName.map(LiveSetupFrame.SpeechConfig.init(voiceName:)))
         )
-        setup.systemInstruction = config.systemInstruction.map(LiveSetupFrame.Content.init(text:))
+        var instruction = config.systemInstruction
+        if resumptionHandle == nil, let prior = priorContext, !prior.isEmpty {
+            instruction = [instruction, prior].compactMap { $0 }.joined(separator: "\n\n")
+        }
+        setup.systemInstruction = instruction.map(LiveSetupFrame.Content.init(text:))
         // Resending the last resumption handle is what makes this a
         // continuation of the same conversation server-side rather than a
         // blank connection — the model keeps its memory of the exchange so far.

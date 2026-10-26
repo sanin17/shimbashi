@@ -202,4 +202,82 @@ private final class ChannelFactorySpy: @unchecked Sendable {
         await waitUntil(timeout: .seconds(2)) { await session.terminalFailure != nil }
         #expect(await session.terminalFailure == .network)
     }
+
+    // MARK: - continuity across connections
+
+    /// The setup frame is the first message the connection sends.
+    private func setupFrame(of channel: FakeWebSocketChannel) async -> String {
+        await waitUntil { await channel.sentMessages.count >= 1 }
+        return await channel.sentMessages.first ?? ""
+    }
+
+    @Test func priorContextIsFoldedIntoTheSystemInstructionOnAFreshStart() async throws {
+        let spy = ChannelFactorySpy()
+        let config = LiveSessionConfig(systemInstruction: "You are a Japanese tutor.")
+        let session = GeminiLiveSession(config: config, apiKey: "key", channelFactory: spy.makeChannel)
+        await session.setPriorContext("Learner: I like sushi")
+        try await session.start()
+        await waitUntil { spy.createdChannels.count == 1 }
+
+        let setup = await setupFrame(of: try #require(spy.createdChannels.first))
+        #expect(setup.contains("You are a Japanese tutor."))
+        #expect(setup.contains("Learner: I like sushi"))
+    }
+
+    @Test func noPriorContextLeavesTheInstructionUntouched() async throws {
+        let spy = ChannelFactorySpy()
+        let config = LiveSessionConfig(systemInstruction: "You are a Japanese tutor.")
+        let session = GeminiLiveSession(config: config, apiKey: "key", channelFactory: spy.makeChannel)
+        try await session.start()
+        await waitUntil { spy.createdChannels.count == 1 }
+
+        let setup = await setupFrame(of: try #require(spy.createdChannels.first))
+        #expect(setup.contains("You are a Japanese tutor."))
+        #expect(!setup.contains("already in progress"))
+    }
+
+    @Test func aFreshStartDoesNotReuseTheOldSessionsResumptionHandle() async throws {
+        let spy = ChannelFactorySpy()
+        let session = GeminiLiveSession(config: .init(), apiKey: "key", channelFactory: spy.makeChannel)
+        try await session.start()
+        await waitUntil { spy.createdChannels.count == 1 }
+
+        // The server hands out a resumption handle on the first session...
+        let first = try #require(spy.createdChannels.first)
+        await first.enqueue(json: #"{"sessionResumptionUpdate":{"newHandle":"handle-from-old-session","resumable":true}}"#)
+        let stream = await session.events
+        var iterator = stream.makeAsyncIterator()
+        _ = await iterator.next()
+
+        // ...then the learner leaves and a new conversation starts.
+        await session.stop()
+        try await session.start()
+        await waitUntil { spy.createdChannels.count == 2 }
+
+        let second = await setupFrame(of: try #require(spy.createdChannels.last))
+        #expect(!second.contains("handle-from-old-session"))
+    }
+
+    @Test func aReconnectWithAHandleDoesNotRepeatTheContext() async throws {
+        let spy = ChannelFactorySpy()
+        let config = LiveSessionConfig(systemInstruction: "You are a Japanese tutor.")
+        let session = GeminiLiveSession(config: config, apiKey: "key", channelFactory: spy.makeChannel)
+        await session.setPriorContext("Learner: I like sushi")
+        try await session.start()
+        await waitUntil { spy.createdChannels.count == 1 }
+
+        // The server gives a resumable handle, then the socket drops.
+        let first = try #require(spy.createdChannels.first)
+        await first.enqueue(json: #"{"sessionResumptionUpdate":{"newHandle":"live-handle","resumable":true}}"#)
+        await waitUntil(timeout: .seconds(1)) { await session.terminalFailure == nil }
+        try await Task.sleep(for: .milliseconds(50))
+        await first.simulateReceiveFailure(StubError())
+        await waitUntil(timeout: .seconds(2)) { spy.createdChannels.count == 2 }
+
+        // The resumed connection carries the server's own memory, so the
+        // transcript block isn't injected a second time.
+        let resumed = await setupFrame(of: try #require(spy.createdChannels.last))
+        #expect(resumed.contains("live-handle"))
+        #expect(!resumed.contains("Learner: I like sushi"))
+    }
 }

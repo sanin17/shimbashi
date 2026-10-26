@@ -54,6 +54,11 @@ public final class VoiceSession {
     /// Accumulates the model's own audio chunks alongside `partialModelText`,
     /// reset together with it in `finalizeModelTurnIfNeeded`.
     private var pendingModelAudio = Data()
+    /// Every finished turn since this session object was created, across all
+    /// of its connections. `turns` is cleared at each new connection (it's the
+    /// transcript of the current one); this is the memory handed to the next
+    /// connection so the tutor still knows what was said.
+    private var spokenHistory: [ConversationContext.Line] = []
 
     /// Kept only to scrub it out of error text — the key rides in the
     /// WebSocket URL's query string, and a URLError's description includes
@@ -171,6 +176,9 @@ public final class VoiceSession {
         let myGeneration = generation
         phase = .connecting
         turns = []
+        // Empty on the very first connection; on any later one this is what
+        // keeps the tutor from greeting the learner as a stranger.
+        await liveSession.setPriorContext(ConversationContext.prompt(from: spokenHistory))
         do {
             let micStream = try await engine.start()
             try await liveSession.start()
@@ -307,6 +315,7 @@ public final class VoiceSession {
         // TEMPORARY DEBUG
         debugLog("[DEBUG VoiceSession] finalizeUserTurnIfNeeded() id=\(turn.id): \"\(partialUserText)\", turns.count will be \(turns.count + 1)")
         turns.append(turn)
+        spokenHistory.append(.init(speaker: .user, text: turn.text))
         partialUserText = ""
     }
 
@@ -316,6 +325,7 @@ public final class VoiceSession {
         // TEMPORARY DEBUG
         debugLog("[DEBUG VoiceSession] finalizeModelTurnIfNeeded() id=\(turn.id): \"\(partialModelText)\", turns.count will be \(turns.count + 1), audioBytes=\(pendingModelAudio.count)")
         turns.append(turn)
+        spokenHistory.append(.init(speaker: .model, text: turn.text))
         partialModelText = ""
         pendingModelAudio = Data()
     }
