@@ -1,64 +1,82 @@
+---
+title: Shimbashi Privacy Policy
+layout: default
+permalink: /privacy-policy/
+---
+
 # Shimbashi Privacy Policy
 
-*Effective October 26, 2026 — Sanin Codes, LLC*
+*Effective October 26, 2026 — published by Sanin Codes, LLC ("we", "us")*
 
-Shimbashi is a Japanese-speaking practice app. This page explains, in plain language, what happens
-to your data.
+Shimbashi is an iPhone app for practicing spoken Japanese. This page explains, in plain language, what
+happens to your data when you use it.
 
 ## The short version
 
-- Shimbashi has **no accounts and no servers of its own**. We never receive your voice, your
-  conversations, or your API key.
-- Your voice and your conversation text go **straight from your phone to Google's Gemini service**,
-  using the API key you provide.
+- The app has **no accounts and no servers of its own**. By design, your voice, your conversations,
+  and your API key are never sent to us.
+- Your voice and conversation text go **directly from your phone to Google's Gemini service**, using
+  an API key that you provide. Google's terms and privacy policy govern what happens to it there.
 - Everything else stays **on your phone**, and you can delete it.
-- No advertising, no analytics, no tracking.
+- The app contains no advertising, analytics, or tracking.
 
-## What gets sent, and to whom
+## What is sent, and to whom
 
 Shimbashi uses Google's Gemini API through your own API key. While you use the app, it sends Google:
 
-- **Your voice** — only while a turn is open, between tapping Start and tapping Stop. The microphone is
-  not used at any other time.
-- **Text of the conversation** — what you and the tutor said, so Gemini can translate it, break it into
-  phrases, summarize it, and note what you found difficult.
-- **Short phrases** — when you tap a speaker icon, that phrase is sent to be turned into speech.
+- **Your voice**, only while a turn is open — between tapping Start and tapping Stop. The app does not
+  use the microphone at any other time.
+- **The text of your conversation** — what you and the tutor said — so Gemini can translate it, break
+  it into phrases, summarize it, and note what you found difficult.
+- **Short phrases**, when you tap a speaker icon, so they can be turned into speech.
 
-This traffic is encrypted (HTTPS) and goes to Google, not to us. Google handles it under its own terms
-and privacy policy for the Gemini API:
+This traffic is encrypted (HTTPS) and goes to Google, not to us. We don't control how Google processes
+it. Google's own documents apply:
 
 - <https://ai.google.dev/gemini-api/terms>
 - <https://policies.google.com/privacy>
 
-Please note that those terms depend on the type of key you use. On Google's **free tier**, Google may
-use the content you send to improve its products, which can include review by people. A billed key is
-treated differently. In some regions Google requires a billed account. Check Google's terms for your
-situation, and avoid speaking anything you wouldn't want Google to process under the free tier.
+The terms that apply depend on the type of key you use. On Google's **free tier**, Google's terms may
+allow it to use content you send to improve its products, which can include review by people. A billed
+key may be treated differently, and some regions require a billed account. Please read Google's terms
+for your situation, and avoid speaking anything you wouldn't want Google to process under them.
 
 ## What stays on your phone
 
-- **Your API key**, in the iOS Keychain, set to *this device only* (it isn't backed up or synced to
-  other devices). It is only ever sent to Google, to authenticate your requests.
+- **Your API key**, in the iOS Keychain, set to *this device only* (so it isn't backed up or synced to
+  your other devices). The app sends it only to Google, to authenticate your requests.
 - **Your conversation history** — transcripts, translations, summaries, and notes about what you've
-  struggled with — in the app's private storage.
-- **Settings** such as whether you've seen the welcome walkthrough.
+  found difficult — in the app's private storage.
+- **Simple preferences**, such as whether you've already seen the welcome walkthrough.
 
-We don't have access to any of it.
-
-## Your choices and deleting your data
+## Your choices
 
 - **Delete conversation history:** Conversations screen → the trash button → *Reset Everything*.
-- **Remove your API key:** Settings → Gemini API Key → *Remove Key*. Do this before deleting the app —
-  iOS can keep Keychain items after an app is removed.
+- **Remove your API key:** Settings → Gemini API Key → *Remove Key*. Do this before deleting the app,
+  because iOS can keep Keychain items after an app is removed.
 - **Revoke access at Google:** delete or restrict the key in Google AI Studio at any time.
-- **Microphone:** you can turn access off in iOS Settings → Shimbashi. The app then can't hear you, but
-  everything else still works.
+- **Microphone:** you can turn it off in iOS Settings → Shimbashi. The app then can't hear you.
 - Deleting the app removes the conversation history it stored.
+
+## Your responsibilities
+
+You provide and control your own API key. You're responsible for keeping it private, for any usage or
+charges on your Google account, and for following Google's terms when you use it.
+
+## AI-generated content
+
+Tutor replies, translations, and phrase breakdowns are generated by an AI model and can be wrong or
+incomplete. They are practice material, not professional language instruction.
 
 ## Children
 
-Shimbashi isn't directed at children under 13, and we don't knowingly collect anything from them
-(we don't collect anything at all).
+Shimbashi is not directed at children under 13, and we do not knowingly collect personal information
+from anyone.
+
+## Not affiliated with Google
+
+Shimbashi is an independent app. It is not affiliated with, endorsed by, or sponsored by Google.
+"Google" and "Gemini" are trademarks of Google LLC.
 
 ## Changes
 

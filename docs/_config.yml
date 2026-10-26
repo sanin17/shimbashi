@@ -1,0 +1,7 @@
+title: Shimbashi
+description: Practice spoken Japanese out loud with a live voice tutor.
+theme: jekyll-theme-minimal
+# Only the public-facing pages are published; submission material stays in the repo.
+exclude:
+  - app-review-notes.md
+  - app-store-listing.md

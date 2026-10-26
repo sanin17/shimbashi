@@ -10,7 +10,7 @@
 | Primary language | English (U.S.) |
 | Price | Free |
 | Support URL | https://github.com/sanin17/shimbashi/issues |
-| Privacy Policy URL | *(the hosted copy of `docs/privacy-policy.md` — see "Hosting" below)* |
+| Privacy Policy URL | https://sanin17.github.io/shimbashi/privacy-policy/ *(live once GitHub Pages is enabled — see "Hosting" below)* |
 | Copyright | 2026 Sanin Codes, LLC |
 
 ## Promotional text (max 170)
@@ -44,7 +44,7 @@ PRIVATE BY DESIGN
 • Your key stays in your phone's Keychain
 • Conversation history is stored only on your device, and you can delete it anytime
 
-Note: Google's terms for the Gemini API apply to the content you send. On Google's free tier, Google may use it to improve its products.
+Note: Google's terms for the Gemini API apply to the content you send. On Google's free tier, Google may use it to improve its products. Replies and translations are AI-generated and can contain mistakes. Shimbashi is an independent app, not affiliated with or endorsed by Google.
 
 ## What's New (version 1.0)
 
@@ -89,4 +89,5 @@ Capture them on a device or simulator, and don't include a real API key in any s
 
 App Store Connect needs a public URL. Easiest: in the GitHub repository, **Settings → Pages**, set the
 source to the `main` branch and the `/docs` folder; the policy is then served at
-`https://sanin17.github.io/shimbashi/privacy-policy`. Any other public page with the same text works.
+`https://sanin17.github.io/shimbashi/privacy-policy/` (allow a minute or two after enabling it).
+Open that URL in a browser before pasting it into App Store Connect.

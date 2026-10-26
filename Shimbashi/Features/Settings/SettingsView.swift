@@ -39,7 +39,7 @@ struct SettingsView: View {
             } header: {
                 Text("About")
             } footer: {
-                Text("Your voice and the text of your conversations are sent to Google's Gemini using your own API key — never to Shimbashi's developers. Your key is stored only in this phone's Keychain. Conversation history stays on this device.")
+                Text("Your voice and the text of your conversations are sent to Google's Gemini using your own API key — never to Shimbashi's developers. Your key is stored only in this phone's Keychain. Conversation history stays on this device. Tutor replies and translations are AI-generated and can contain mistakes.")
             }
         }
         .navigationTitle("Settings")
