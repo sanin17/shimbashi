@@ -40,6 +40,7 @@ struct APIKeySetupView: View {
                             confirmingRemoval = true
                         }
                     }
+                    .brandRow()
                 }
 
                 Section {
@@ -62,7 +63,7 @@ struct APIKeySetupView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(problem.message)
                                 .font(.footnote)
-                                .foregroundStyle(.red)
+                                .foregroundStyle(Brand.error)
                             if problem.canSaveAnyway {
                                 Button("Save Anyway") { commit(trimmedNewKey) }
                                     .font(.footnote)
@@ -74,6 +75,7 @@ struct APIKeySetupView: View {
                 } footer: {
                     Text("Stored in the iOS Keychain on this device only. It's sent only to Google, never to anyone else.")
                 }
+                .brandRow()
 
                 Section {
                     step(1, "Open Google AI Studio and sign in with a Google account.")
@@ -87,7 +89,9 @@ struct APIKeySetupView: View {
                 } footer: {
                     Text("A free key is enough to get started. The free tier has usage limits, and Google's free-tier data terms apply.")
                 }
+                .brandRow()
             }
+            .brandList()
             .navigationTitle("Gemini API Key")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -152,7 +156,7 @@ struct APIKeySetupView: View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             Text("\(number)")
                 .font(.footnote.bold())
-                .foregroundStyle(.tint)
+                .foregroundStyle(Brand.sun)
                 .frame(width: 20)
             Text(text)
         }

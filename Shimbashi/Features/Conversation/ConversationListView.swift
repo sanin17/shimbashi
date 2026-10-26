@@ -16,11 +16,33 @@ struct ConversationListView: View {
                     ConversationView()
                 } label: {
                     Label("New Conversation", systemImage: "plus.bubble.fill")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .padding(.vertical, 8)
                 }
+                .listRowBackground(Brand.torii)
             }
 
-            if !sessions.isEmpty {
-                Section("Past Conversations") {
+            if sessions.isEmpty {
+                Section {
+                    VStack(spacing: 8) {
+                        Image(systemName: "text.bubble")
+                            .font(.title)
+                            .foregroundStyle(Brand.sun)
+                        Text("No conversations yet")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                        Text("Start one above — it will be saved here so you can pick it back up later.")
+                            .font(.footnote)
+                            .foregroundStyle(Brand.textSecondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .listRowBackground(Color.clear)
+                }
+            } else {
+                Section {
                     ForEach(sessions) { conversationSession in
                         NavigationLink {
                             // Opens live, not read-only — tapping Start picks
@@ -30,10 +52,15 @@ struct ConversationListView: View {
                         } label: {
                             ConversationRow(conversationSession: conversationSession)
                         }
+                        .brandRow()
                     }
+                } header: {
+                    Text("Past conversations")
+                        .foregroundStyle(Brand.textSecondary)
                 }
             }
         }
+        .brandList()
         .navigationTitle("Conversations")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -63,20 +90,21 @@ private struct ConversationRow: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(conversationSession.displayLabel)
                 .font(.subheadline.weight(.medium))
+                .foregroundStyle(.white)
             if let summary = conversationSession.summary, !summary.isEmpty {
                 Text(summary)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Brand.textSecondary)
                     .lineLimit(2)
             } else if conversationSession.endedAt == nil {
                 Text("In progress…")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Brand.textTertiary)
             } else {
                 let count = conversationSession.turns.count
                 Text("\(count) turn\(count == 1 ? "" : "s")")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Brand.textTertiary)
             }
         }
         .padding(.vertical, 2)

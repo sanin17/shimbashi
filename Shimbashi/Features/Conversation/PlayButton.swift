@@ -43,12 +43,12 @@ struct PlayButton: View {
                 } else {
                     Image(systemName: isPlaying ? "speaker.wave.2.fill" : "speaker.wave.2")
                         .font(iconFont)
-                        .foregroundStyle(isPlaying ? Color.accentColor : Color.secondary)
+                        .foregroundStyle(isPlaying ? Brand.sun : Brand.textSecondary)
                 }
                 if isCallingProvider {
                     Image(systemName: "icloud.and.arrow.down")
                         .font(.system(size: 8, weight: .bold))
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(Brand.sun)
                         .offset(x: 8, y: -6)
                 }
             }

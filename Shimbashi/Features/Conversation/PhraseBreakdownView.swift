@@ -13,14 +13,15 @@ struct PhraseBreakdownView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 24) {
                     mainSentence
-                    Divider()
+                    Rectangle().fill(Brand.hairline).frame(height: 1)
                     phraseList
                 }
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .brandScreen()
             .navigationTitle("Breakdown")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -36,6 +37,7 @@ struct PhraseBreakdownView: View {
             HStack(alignment: .top, spacing: 12) {
                 Text(turn.japanese)
                     .font(.largeTitle.weight(.semibold))
+                    .foregroundStyle(.white)
                 PlayButton(text: turn.japanese, controller: speechPlayback, iconFont: .title2, cachedPCM16: turn.audio)
             }
 
@@ -45,18 +47,18 @@ struct PhraseBreakdownView: View {
             case .loaded(let result):
                 Text(result.romaji)
                     .font(.title3)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Brand.textSecondary)
                 Text(result.english)
                     .font(.title3)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Brand.textTertiary)
             case .failed:
                 Text("Translation unavailable")
                     .font(.body)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Brand.error)
             case .notApplicable:
                 Text("Spoken in English")
                     .font(.body)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Brand.textTertiary)
             }
         }
     }
@@ -69,34 +71,38 @@ struct PhraseBreakdownView: View {
                 NetworkSpinner(controlSize: .regular, badgeSize: 11)
                 Text("Breaking down phrases…")
                     .font(.title3)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Brand.textSecondary)
             }
         case .loaded(let phrases):
-            VStack(alignment: .leading, spacing: 22) {
+            VStack(alignment: .leading, spacing: 12) {
                 ForEach(Array(phrases.enumerated()), id: \.offset) { _, phrase in
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(alignment: .top, spacing: 10) {
                             Text(phrase.japanese)
                                 .font(.title2.weight(.semibold))
+                                .foregroundStyle(.white)
                             PlayButton(text: phrase.japanese, controller: speechPlayback, iconFont: .title3)
                         }
                         Text(phrase.romaji)
                             .font(.headline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Brand.textSecondary)
                         Text(phrase.english)
                             .font(.subheadline)
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(Brand.textTertiary)
                     }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .brandCard()
                 }
             }
         case .failed:
             Button("Couldn't break this down — tap to retry", action: onRetryBreakdown)
                 .font(.title3)
-                .foregroundStyle(.red)
+                .foregroundStyle(Brand.error)
         case .notApplicable:
             Text("This wasn't Japanese, so there's nothing to break down.")
                 .font(.title3)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.textSecondary)
         }
     }
 }

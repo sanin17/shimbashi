@@ -27,12 +27,15 @@ struct SettingsView: View {
                 Text("Account")
             } footer: {
                 Text("Add, replace, or remove your key, and see how to get one from Google.")
+                    .foregroundStyle(Brand.textTertiary)
             }
+            .brandRow()
 
             Section("Help") {
                 Button("How Shimbashi Works") { showingHelp = true }
                     .foregroundStyle(.primary)
             }
+            .brandRow()
 
             Section {
                 LabeledContent("Version", value: versionString)
@@ -40,8 +43,11 @@ struct SettingsView: View {
                 Text("About")
             } footer: {
                 Text("Your voice and the text of your conversations are sent to Google's Gemini using your own API key — never to Shimbashi's developers. Your key is stored only in this phone's Keychain. Conversation history stays on this device. Tutor replies and translations are AI-generated and can contain mistakes.")
+                    .foregroundStyle(Brand.textTertiary)
             }
+            .brandRow()
         }
+        .brandList()
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingKeySetup, onDismiss: {

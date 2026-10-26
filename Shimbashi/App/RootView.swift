@@ -1,16 +1,5 @@
 import SwiftUI
 
-/// Colors lifted from the app icon, so the home screen reads as the same
-/// brand: a night-indigo sky, a warm sunrise glow, and the torii's orange.
-private enum Brand {
-    static let night = Color(red: 0.07, green: 0.08, blue: 0.22)
-    static let indigo = Color(red: 0.17, green: 0.18, blue: 0.43)
-    static let dusk = Color(red: 0.30, green: 0.22, blue: 0.50)
-    static let sun = Color(red: 1.00, green: 0.72, blue: 0.45)
-    static let toriiLight = Color(red: 0.96, green: 0.38, blue: 0.20)
-    static let toriiDeep = Color(red: 0.84, green: 0.23, blue: 0.17)
-}
-
 struct RootView: View {
     @State private var hasKey = Keychain.load(.geminiAPIKey)?.isEmpty == false
     @State private var showingKeySetup = false
@@ -70,21 +59,8 @@ struct RootView: View {
     // MARK: - Pieces
 
     private var background: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Brand.night, Brand.indigo, Brand.dusk],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            // The sunrise from the icon, glowing behind the logo.
-            RadialGradient(
-                colors: [Brand.sun.opacity(0.42), Brand.sun.opacity(0.10), .clear],
-                center: UnitPoint(x: 0.5, y: 0.30),
-                startRadius: 10,
-                endRadius: 340
-            )
-        }
-        .ignoresSafeArea()
+        // The sunrise from the icon, glowing behind the logo.
+        BrandBackground(glowCenter: UnitPoint(x: 0.5, y: 0.30), glowStrength: 0.42)
     }
 
     /// `compact` is for short screens (iPhone SE): a smaller logo and tighter
@@ -157,57 +133,11 @@ struct RootView: View {
                 .foregroundStyle(.white.opacity(0.85))
                 .multilineTextAlignment(.center)
             Button("Add API Key") { showingKeySetup = true }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Brand.night)
-                .padding(.horizontal, 22)
-                .padding(.vertical, 9)
-                .background(.white, in: Capsule())
+                .buttonStyle(PillButtonStyle())
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .background(.white.opacity(0.10), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(.white.opacity(0.14), lineWidth: 1)
-        )
-    }
-}
-
-// MARK: - Button styles
-
-private struct PrimaryActionStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.title3.weight(.semibold))
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 17)
-            .background(
-                LinearGradient(
-                    colors: [Brand.toriiLight, Brand.toriiDeep],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-            )
-            .shadow(color: Brand.toriiDeep.opacity(0.45), radius: 14, y: 6)
-            .opacity(configuration.isPressed ? 0.85 : 1)
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-    }
-}
-
-private struct SecondaryActionStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.body.weight(.medium))
-            .foregroundStyle(.white.opacity(0.92))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(.white.opacity(configuration.isPressed ? 0.18 : 0.10), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(.white.opacity(0.14), lineWidth: 1)
-            )
+        .brandCard()
     }
 }
 

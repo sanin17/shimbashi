@@ -13,14 +13,25 @@ struct TurnCell: View {
     private var horizontalEdge: Alignment { turn.speaker == .user ? .trailing : .leading }
 
     var body: some View {
-        VStack(alignment: turn.speaker == .user ? .trailing : .leading, spacing: 3) {
-            HStack(spacing: 4) {
+        bubble
+            .frame(maxWidth: .infinity, alignment: horizontalEdge)
+            // Leave the far side open so replies and answers read as two
+            // sides of a chat rather than full-width blocks.
+            .padding(turn.speaker == .user ? .leading : .trailing, 28)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onSelect)
+    }
+
+    private var bubble: some View {
+        VStack(alignment: turn.speaker == .user ? .trailing : .leading, spacing: 4) {
+            HStack(spacing: 6) {
                 if turn.speaker != .user {
                     breakdownIndicator
                     PlayButton(text: turn.japanese, controller: speechPlayback, cachedPCM16: turn.audio)
                 }
                 Text(turn.japanese)
                     .font(.title3)
+                    .foregroundStyle(.white)
                 if turn.speaker == .user {
                     PlayButton(text: turn.japanese, controller: speechPlayback)
                     breakdownIndicator
@@ -33,29 +44,48 @@ struct TurnCell: View {
             case .loaded(let result):
                 Text(result.romaji)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Brand.textSecondary)
                 Text(result.english)
                     .font(.footnote)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Brand.textTertiary)
             case .failed:
                 Text("Translation unavailable")
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Brand.error)
             case .notApplicable:
                 Text("Spoken in English")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Brand.textTertiary)
             }
         }
-        .frame(maxWidth: .infinity, alignment: horizontalEdge)
         .multilineTextAlignment(turn.speaker == .user ? .trailing : .leading)
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onSelect)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(bubbleBackground)
+    }
+
+    @ViewBuilder
+    private var bubbleBackground: some View {
+        let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
+        if turn.speaker == .user {
+            // The learner's side carries the brand's orange.
+            shape.fill(
+                LinearGradient(
+                    colors: [Brand.toriiLight.opacity(0.58), Brand.toriiDeep.opacity(0.50)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(shape.strokeBorder(Brand.toriiLight.opacity(0.55), lineWidth: 1))
+        } else {
+            shape.fill(Brand.surface)
+                .overlay(shape.strokeBorder(Brand.hairline, lineWidth: 1))
+        }
     }
 
     private var breakdownIndicator: some View {
         Image(systemName: "chevron.right")
             .font(.caption2)
-            .foregroundStyle(.tertiary)
+            .foregroundStyle(Brand.textTertiary)
     }
 }

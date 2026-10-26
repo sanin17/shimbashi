@@ -49,6 +49,7 @@ struct ConversationView: View {
                 ProgressView("Starting…")
             }
         }
+        .brandScreen()
         .navigationTitle(resuming?.displayLabel ?? "Conversation")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingKeySetup, onDismiss: startIfPossible) {
@@ -284,24 +285,30 @@ private struct StatusBar: View {
     let onFixKey: () -> Void
 
     var body: some View {
-        VStack(spacing: 6) {
-            Text(phaseLabel)
-                .font(.caption)
-                .foregroundStyle(isFailed ? .red : .secondary)
-                .multilineTextAlignment(.center)
+        VStack(spacing: 10) {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 8, height: 8)
+                Text(phaseLabel)
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(isFailed ? Brand.error : .white.opacity(0.88))
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(Brand.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
             if isFailed {
                 Button("Check API Key", action: onFixKey)
-                    .font(.caption.weight(.semibold))
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
+                    .buttonStyle(PillButtonStyle())
             }
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3).fill(.quaternary)
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(.tint)
+                    Capsule().fill(Color.white.opacity(0.12))
+                    Capsule()
+                        .fill(Brand.torii)
                         .frame(width: geo.size.width * CGFloat(session.inputLevel))
                         .animation(.linear(duration: 0.05), value: session.inputLevel)
                 }
@@ -315,6 +322,15 @@ private struct StatusBar: View {
     private var isFailed: Bool {
         if case .failed = session.phase { return true }
         return false
+    }
+
+    private var statusColor: Color {
+        switch session.phase {
+        case .idle: return .white.opacity(0.4)
+        case .connecting, .reconnecting: return Brand.sun
+        case .failed: return Brand.error
+        case .active: return session.isRecording ? Brand.toriiLight : Color(red: 0.45, green: 0.85, blue: 0.55)
+        }
     }
 
     private var phaseLabel: String {
@@ -337,15 +353,16 @@ private struct MissingKeyView: View {
         VStack(spacing: 16) {
             Image(systemName: "key.fill")
                 .font(.system(size: 40))
-                .foregroundStyle(.tint)
+                .foregroundStyle(Brand.sun)
             Text("Add your Gemini API key")
                 .font(.title3.bold())
+                .foregroundStyle(.white)
             Text("Shimbashi talks to Google's Gemini using your own key, which you can get for free. It stays on this device.")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.textSecondary)
                 .multilineTextAlignment(.center)
             Button("Add API Key", action: onAdd)
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(PillButtonStyle())
         }
         .padding(32)
     }
@@ -376,22 +393,26 @@ private struct PartialCell: View {
     let translation: TranslationResult?
 
     var body: some View {
-        VStack(alignment: speaker == .user ? .trailing : .leading, spacing: 3) {
+        VStack(alignment: speaker == .user ? .trailing : .leading, spacing: 4) {
             Text(text)
                 .font(.body)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.85))
 
             if let translation {
                 Text(translation.romaji)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Brand.textSecondary)
                 Text(translation.english)
                     .font(.footnote)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Brand.textTertiary)
             }
         }
-        .frame(maxWidth: .infinity, alignment: speaker == .user ? .trailing : .leading)
         .multilineTextAlignment(speaker == .user ? .trailing : .leading)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Brand.surface.opacity(0.7), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .frame(maxWidth: .infinity, alignment: speaker == .user ? .trailing : .leading)
+        .padding(speaker == .user ? .leading : .trailing, 28)
     }
 }
 
@@ -417,7 +438,7 @@ private struct Controls: View {
     @State private var ownSession: ConversationSession?
 
     var body: some View {
-        Button(session.isRecording ? "Stop" : "Start") {
+        Button {
             Task {
                 if session.isRecording {
                     await session.endTurn()
@@ -437,9 +458,15 @@ private struct Controls: View {
                 }
             }
         }
-        .buttonStyle(.borderedProminent)
-        .tint(session.isRecording ? .red : .accentColor)
-        .padding()
+        label: {
+            Label(
+                session.isRecording ? "Stop" : "Start",
+                systemImage: session.isRecording ? "stop.fill" : "mic.fill"
+            )
+        }
+        .buttonStyle(RecordButtonStyle(isRecording: session.isRecording))
+        .padding(.horizontal, 24)
+        .padding(.vertical, 12)
         .frame(maxWidth: .infinity)
     }
 

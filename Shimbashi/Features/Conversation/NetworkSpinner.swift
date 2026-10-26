@@ -16,7 +16,7 @@ struct NetworkSpinner: View {
             .overlay(alignment: .topTrailing) {
                 Image(systemName: "icloud.and.arrow.down")
                     .font(.system(size: badgeSize, weight: .bold))
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Brand.sun)
                     .offset(x: badgeSize * 0.9, y: -badgeSize * 0.75)
             }
     }

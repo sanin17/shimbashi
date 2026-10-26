@@ -51,35 +51,33 @@ struct OnboardingView: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
-            .indexViewStyle(.page(backgroundDisplayMode: .always))
+            .indexViewStyle(.page(backgroundDisplayMode: .never))
 
             VStack(spacing: 12) {
                 if isLastPage {
                     if !hasKey {
                         Button("Add API Key") { showingKeySetup = true }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.large)
+                            .buttonStyle(PrimaryActionStyle())
                     }
                     if hasKey {
                         Button("Get Started", action: onFinish)
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.large)
+                            .buttonStyle(PrimaryActionStyle())
                     } else {
                         Button("I'll Do This Later", action: onFinish)
-                            .buttonStyle(.bordered)
-                            .controlSize(.large)
+                            .buttonStyle(SecondaryActionStyle())
                     }
                 } else {
                     Button("Next") { withAnimation { page += 1 } }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
+                        .buttonStyle(PrimaryActionStyle())
                     Button("Skip", action: onFinish)
                         .font(.footnote)
+                        .foregroundStyle(Brand.textSecondary)
                 }
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
         }
+        .background(BrandBackground(glowCenter: UnitPoint(x: 0.5, y: 0.28), glowStrength: 0.34))
         .sheet(isPresented: $showingKeySetup, onDismiss: {
             hasKey = Keychain.load(.geminiAPIKey)?.isEmpty == false
         }) {
@@ -92,14 +90,15 @@ struct OnboardingView: View {
             Spacer()
             Image(systemName: item.symbol)
                 .font(.system(size: 64))
-                .foregroundStyle(.tint)
+                .foregroundStyle(Brand.sun)
                 .accessibilityHidden(true)
             Text(item.title)
-                .font(.title.bold())
+                .font(.system(.title, design: .rounded, weight: .bold))
+                .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
             Text(item.message)
                 .font(.body)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.textSecondary)
                 .multilineTextAlignment(.center)
             Spacer()
             Spacer()
