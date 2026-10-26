@@ -38,7 +38,11 @@ final class ConversationStore {
     /// defensive safety; when present, the dangling session is finalized
     /// exactly as `endSession` would have. The new session is always created
     /// regardless, since turn persistence for it depends on it existing.
-    func beginSession(closingDanglingSessionWith client: (any GeminiTextGenerating)?) {
+    /// Returns the new session so the screen that started it can reopen the
+    /// *same* conversation later (after a lock or a failure) instead of
+    /// starting another.
+    @discardableResult
+    func beginSession(closingDanglingSessionWith client: (any GeminiTextGenerating)?) -> ConversationSession {
         // TEMPORARY DEBUG
         debugLog("[DEBUG beginSession] called, client=\(client == nil ? "nil" : "present"), currentSession=\(currentSession == nil ? "nil" : "present")")
         if let client, let dangling = currentSession ?? Self.fetchOpenSession(context: context) {
@@ -56,6 +60,7 @@ final class ConversationStore {
         } catch {
             debugLog("[DEBUG beginSession] SAVE FAILED: \(error)")
         }
+        return newSession
     }
 
     /// Reopens an already-finished conversation so new turns append to it

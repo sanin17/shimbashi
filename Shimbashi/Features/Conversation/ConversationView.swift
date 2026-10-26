@@ -410,6 +410,11 @@ private struct Controls: View {
     let store: ConversationStore
     let geminiTextClient: GeminiTextClient?
     let resuming: ConversationSession?
+    /// The saved conversation this screen created on its first Start. A
+    /// later Start (after the phone locked, or a connection failed) reopens
+    /// it rather than saving the follow-up as a second conversation — it's
+    /// the same conversation on screen, so it must stay one in the list.
+    @State private var ownSession: ConversationSession?
 
     var body: some View {
         Button(session.isRecording ? "Stop" : "Start") {
@@ -418,13 +423,14 @@ private struct Controls: View {
                     await session.endTurn()
                 } else {
                     if session.phase == .idle || isFailed {
-                        // Reopen the conversation being resumed rather than
-                        // stranding its turns in a finished session and
-                        // starting an empty one alongside it.
-                        if let resuming {
-                            store.resumeSession(resuming)
+                        // Reopen the conversation being resumed (or the one this
+                        // screen already started) rather than stranding its
+                        // turns in a finished session and starting an empty
+                        // one alongside it.
+                        if let existing = resuming ?? ownSession {
+                            store.resumeSession(existing)
                         } else {
-                            store.beginSession(closingDanglingSessionWith: geminiTextClient)
+                            ownSession = store.beginSession(closingDanglingSessionWith: geminiTextClient)
                         }
                     }
                     await session.beginTurn()

@@ -140,6 +140,39 @@ private func makeInMemoryContext() throws -> ModelContext {
         #expect(sessions.first?.turns.count == 2)
     }
 
+    @Test func aFollowUpAfterTheConversationEndedStaysOneConversation() async throws {
+        let context = try makeInMemoryContext()
+        let store = ConversationStore(context: context)
+
+        // First Start on a new conversation screen: the screen keeps what
+        // beginSession returns.
+        let screensConversation = store.beginSession(closingDanglingSessionWith: nil)
+        store.persist(Turn(speaker: .user, text: "I want to try sushi in Tokyo"), romaji: nil, english: nil)
+
+        // The phone locks: the conversation is ended and closed out...
+        store.endSession(extractingStrugglesWith: FakeTextGenerator(.fixed(#"{"summary":"sushi","struggles":[]}"#)))
+        await waitUntil { screensConversation.summary != nil }
+        #expect(screensConversation.endedAt != nil)
+
+        // ...then the learner comes back and taps Start. The screen reopens
+        // its own conversation, so the follow-up lands in the same one.
+        store.resumeSession(screensConversation)
+        store.persist(Turn(speaker: .user, text: "Where should I go for that?"), romaji: nil, english: nil)
+
+        let sessions = try context.fetch(FetchDescriptor<ConversationSession>())
+        #expect(sessions.count == 1)
+        #expect(sessions.first?.turns.count == 2)
+        #expect(screensConversation.endedAt == nil)
+    }
+
+    @Test func beginSessionReturnsTheSessionNewTurnsAreSavedUnder() throws {
+        let context = try makeInMemoryContext()
+        let store = ConversationStore(context: context)
+        let started = store.beginSession(closingDanglingSessionWith: nil)
+        store.persist(Turn(speaker: .user, text: "こんにちは"), romaji: nil, english: nil)
+        #expect(started.turns.count == 1)
+    }
+
     @Test func recapOfSpecificSessionUsesThatConversationNotTheMostRecent() async throws {
         let context = try makeInMemoryContext()
         let store = ConversationStore(context: context)
