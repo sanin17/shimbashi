@@ -96,14 +96,16 @@ with explicit `activityStart` / `activityEnd` frames. Tapping Start again mid-re
 - **Phrase-mismatch false positive.** The breakdown sanity check flagged full-width `？` vs half-width `?`
   as content mismatch; comparison now normalizes width variants.
 
-### Test coverage (102 tests)
-- `Packages/VoiceCore/Tests/VoiceCoreTests/` — 59 tests: wire protocol encode/decode (`LiveInbound`,
+### Test coverage (174 tests)
+- `Packages/VoiceCore/Tests/VoiceCoreTests/` — 92 tests: wire protocol encode/decode (`LiveInbound`,
   `LiveOutbound`, `LiveSetupFrame`), PCM/format math (`PCMFormats`, `PCMStreamResampler`), mic tap
-  chunking (`MicTapContext`), and the transport actors (`GeminiLiveConnection`, `GeminiLiveSession`).
-- `Shimbashi/ShimbashiTests/` — 43 tests: Japanese-script detection, WAV header layout, LLM JSON
-  extraction (`TranslationService`, `StruggleExtractor`), the coordinator's routing/dedup/caching logic,
-  and SwiftData persistence with an in-memory container — including regression tests for the
-  transcript-wipe and dangling-session bugs above.
+  chunking (`MicTapContext`), the transport actors (`GeminiLiveConnection`, `GeminiLiveSession`),
+  failure classification (`LiveFailure`), the conversation-context builder, and Japanese spacing cleanup.
+- `Shimbashi/ShimbashiTests/` — 82 tests: Japanese-script detection, WAV header layout, LLM JSON
+  extraction (`TranslationService`, `StruggleExtractor`), the text and speech clients (model failover,
+  retries, key-in-header), API-key validation, the tutor prompt's language rule, the coordinator's
+  routing/dedup/caching logic, and SwiftData persistence with an in-memory container — including
+  regression tests for the transcript-wipe, dangling-session, and split-conversation bugs.
 - Two small seams added purely for testability, with no behavior change: a `GeminiTextGenerating` protocol
   around `GeminiTextClient`, and an injectable `channelFactory` on `GeminiLiveSession`.
 
@@ -188,5 +190,7 @@ These all cost real debugging time at least once.
 - **Untested by design**: `VoiceIOEngine` / `AudioSessionController` (need real hardware), most of
   `AudioPlaybackQueue` (see trap above), Keychain (a round-trip test would clobber the real stored API key),
   and the SwiftUI view layer (thin wiring, no branching logic).
-- **Shipping**: the Gemini API key lives in the device Keychain, which is fine for personal use. Sharing
-  this app would require a token-minting backend, and those tokens must lock `live_connect_constraints`.
+- **Shipping**: Shimbashi is bring-your-own-key. Each user's Gemini key lives in their own device Keychain
+  (this-device-only) and is sent only to Google, so there is no shared secret and no backend. Never ship a
+  developer-owned key inside the app: that would require a token-minting backend, and those tokens would
+  need to lock `live_connect_constraints`.
