@@ -91,3 +91,31 @@ App Store Connect needs a public URL. Easiest: in the GitHub repository, **Setti
 source to the `main` branch and the `/docs` folder; the policy is then served at
 `https://sanin17.github.io/shimbashi/privacy-policy/` (allow a minute or two after enabling it).
 Open that URL in a browser before pasting it into App Store Connect.
+
+## TestFlight
+
+App Store Connect → TestFlight → *Test Information*. Each new upload needs a higher build number: bump
+`CURRENT_PROJECT_VERSION` in `project.yml` (and run `xcodegen generate`) before archiving again.
+
+**Beta App Description**
+
+Practice spoken Japanese out loud with a live voice tutor. Tap Start, talk, tap Stop, and the tutor answers in Japanese with the romaji and English on screen. Tap any reply to study it phrase by phrase.
+
+**What to Test** (paste into the build's "What to Test" field)
+
+Thanks for testing Shimbashi! It's a voice partner for practicing spoken Japanese.
+
+Before you start: you need a free Google Gemini API key. It takes about two minutes, and the app walks you through it from the first screen (or later in Settings → Gemini API Key).
+
+Please try:
+1. Conversations → New Conversation → tap Start, say something in English or Japanese, then tap Stop.
+2. Does the tutor answer out loud in Japanese? Do the Japanese, romaji and English appear?
+3. Tap a reply to see the phrase breakdown, and tap the speaker icons to hear phrases.
+4. Lock your phone mid-conversation, come back, and tap Start. Does the tutor remember what you were talking about? Is it still one conversation in the list?
+5. Settings → How Shimbashi Works replays the walkthrough.
+
+Please tell me about: anything confusing, anything that looks broken or cut off, replies that aren't in Japanese, and any red error message. Include your iPhone model and iOS version. In TestFlight you can screenshot the app and tap "Share Beta Feedback".
+
+Good to know: replies and translations are AI-generated and can contain mistakes. Your voice and the text of your conversations go to Google using your own key. Nothing is sent to the developer.
+
+**Feedback email:** use an address you're comfortable sharing with testers (TestFlight requires one).
