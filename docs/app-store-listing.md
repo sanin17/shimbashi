@@ -77,10 +77,10 @@ so no export documentation is required.
 Required: iPhone 6.9" (1320×2868) or 6.5" (1284×2778 / 1242×2688). The app is iPhone-only, so no iPad
 screenshots are needed. Suggested set, in order:
 
-1. The welcome walkthrough ("Speak Japanese out loud")
+1. The home screen (logo, "Shimbashi 新橋", Conversations and Settings)
 2. A conversation in progress, with a tutor reply showing Japanese, romaji, and English
 3. The phrase breakdown screen
-4. The Conversations list with a couple of past conversations
+4. The welcome walkthrough ("Speak Japanese out loud")
 5. The "Bring your own Gemini key" screen
 
 Capture them on a device or simulator, and don't include a real API key in any screenshot.
