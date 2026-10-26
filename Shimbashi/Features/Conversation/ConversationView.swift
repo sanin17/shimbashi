@@ -17,7 +17,6 @@ struct ConversationView: View {
     var resuming: ConversationSession?
 
     @Environment(\.modelContext) private var modelContext
-    @AppStorage("noiseResistance") private var noiseResistance: Double = 0.4
     @State private var session: VoiceSession?
     @State private var coordinator: ConversationCoordinator?
     @State private var store: ConversationStore?
@@ -104,8 +103,7 @@ struct ConversationView: View {
         let recap = resuming.flatMap { store.recap(of: $0) } ?? store.recapOfMostRecentSession()
         let struggles = store.recentStruggleNotes().map { "\($0.phrase) — \($0.note)" }
         let config = LiveSessionConfig(
-            systemInstruction: Prompts.systemPrompt(recap: recap, struggles: struggles),
-            noiseResistance: noiseResistance
+            systemInstruction: Prompts.systemPrompt(recap: recap, struggles: struggles)
         )
         session = VoiceSession(config: config, apiKey: geminiKey)
 

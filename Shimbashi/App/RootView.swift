@@ -3,6 +3,8 @@ import SwiftUI
 struct RootView: View {
     @State private var hasKey = Keychain.load(.geminiAPIKey)?.isEmpty == false
     @State private var showingKeySetup = false
+    /// Shown once, on first launch; reachable again from Settings.
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
 
     var body: some View {
         NavigationStack {
@@ -53,6 +55,16 @@ struct RootView: View {
             // The key can change from Settings or a conversation's failure
             // screen, so re-read it whenever this screen comes back.
             .onAppear { hasKey = Keychain.load(.geminiAPIKey)?.isEmpty == false }
+            .onChange(of: hasSeenOnboarding) { _, _ in
+                // The walkthrough can end with a key saved.
+                hasKey = Keychain.load(.geminiAPIKey)?.isEmpty == false
+            }
+            .fullScreenCover(isPresented: Binding(
+                get: { !hasSeenOnboarding },
+                set: { if !$0 { hasSeenOnboarding = true } }
+            )) {
+                OnboardingView(onFinish: { hasSeenOnboarding = true })
+            }
             .sheet(isPresented: $showingKeySetup, onDismiss: {
                 hasKey = Keychain.load(.geminiAPIKey)?.isEmpty == false
             }) {

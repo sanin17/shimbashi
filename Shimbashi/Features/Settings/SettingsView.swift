@@ -1,12 +1,18 @@
 import SwiftUI
 
-/// Persisted, adjustable session settings — currently just background-noise
-/// resistance, but the natural home for anything else configurable that
-/// applies to every conversation rather than a single one.
+/// Settings: the Gemini key, a way back to the walkthrough, and what the
+/// app does with your data.
 struct SettingsView: View {
-    @AppStorage("noiseResistance") private var noiseResistance: Double = 0.4
     @State private var hasKey = Keychain.load(.geminiAPIKey)?.isEmpty == false
     @State private var showingKeySetup = false
+    @State private var showingHelp = false
+
+    private var versionString: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "—"
+        let build = info?["CFBundleVersion"] as? String ?? "—"
+        return "\(version) (\(build))"
+    }
 
     var body: some View {
         Form {
@@ -23,19 +29,17 @@ struct SettingsView: View {
                 Text("Add, replace, or remove your key, and see how to get one from Google.")
             }
 
+            Section("Help") {
+                Button("How Shimbashi Works") { showingHelp = true }
+                    .foregroundStyle(.primary)
+            }
+
             Section {
-                Slider(value: $noiseResistance, in: 0...1, step: 0.05)
-                HStack {
-                    Text("Sensitive")
-                    Spacer()
-                    Text("Noise-resistant")
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                LabeledContent("Version", value: versionString)
             } header: {
-                Text("Background Noise")
+                Text("About")
             } footer: {
-                Text("Higher requires clearer, more sustained speech before the tutor starts listening — helps in noisy environments, but may miss quiet or hesitant speech. Takes effect the next time you open the Conversation screen.")
+                Text("Your voice and the text of your conversations are sent to Google's Gemini using your own API key — never to Shimbashi's developers. Your key is stored only in this phone's Keychain. Conversation history stays on this device.")
             }
         }
         .navigationTitle("Settings")
@@ -44,6 +48,11 @@ struct SettingsView: View {
             hasKey = Keychain.load(.geminiAPIKey)?.isEmpty == false
         }) {
             APIKeySetupView()
+        }
+        .sheet(isPresented: $showingHelp, onDismiss: {
+            hasKey = Keychain.load(.geminiAPIKey)?.isEmpty == false
+        }) {
+            OnboardingView(onFinish: { showingHelp = false })
         }
     }
 }
