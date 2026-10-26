@@ -1,0 +1,71 @@
+# Shimbashi
+
+Practice spoken Japanese out loud with a live voice tutor.
+
+You tap Start, talk, and tap Stop. The tutor answers in Japanese, and the screen shows the Japanese,
+the romaji, and the English. Tap any reply to break it into phrases with meanings, and tap the
+speaker icon to hear a phrase again. Reading and writing are deliberately out of scope — this is for
+speaking and listening.
+
+Shimbashi is an iPhone app (iOS 18+). It has **no backend and no account**: it talks straight to
+Google's Gemini using **your own API key**, which is free to create.
+
+## Using the app
+
+1. Open the app and follow the short walkthrough.
+2. Get a free key at <https://aistudio.google.com/apikey> and paste it in when asked
+   (or later in **Settings → Gemini API Key**). The app checks the key with Google before saving it.
+3. Start a conversation, allow microphone access, and talk.
+
+## Privacy and security at a glance
+
+- Your voice (only between Start and Stop) and the text of your conversations go **directly from
+  your phone to Google's Gemini API**, using your key. Nothing goes to the developers.
+- Your API key lives in the iOS Keychain, marked this-device-only. It is never written to a file,
+  sent anywhere but Google, or included in logs or error messages.
+- Conversation history is stored on the device only, and can be deleted from the Conversations screen.
+- No analytics, advertising, or tracking SDKs.
+
+Read the full [privacy policy](docs/privacy-policy.md). To report a security problem, see
+[SECURITY.md](SECURITY.md).
+
+## Building from source
+
+Requirements: a recent Xcode with the iOS 18 SDK, and [XcodeGen](https://github.com/yonaskolb/XcodeGen)
+(`brew install xcodegen`). The `.xcodeproj` is generated from `project.yml` and isn't checked in.
+
+```sh
+xcodegen generate
+open Shimbashi.xcodeproj
+```
+
+In **Signing & Capabilities**, choose your own team and a bundle identifier you control (the checked-in
+values belong to the publisher's developer account). Then run on a simulator or a device — the
+microphone and a Gemini key are needed to hold a real conversation.
+
+Tests (pick any simulator you have installed):
+
+```sh
+# App tests
+xcodebuild test -project Shimbashi.xcodeproj -scheme Shimbashi \
+  -destination 'platform=iOS Simulator,name=iPhone 16'
+
+# VoiceCore package tests — run from the package directory
+cd Packages/VoiceCore && xcodebuild test -scheme VoiceCore \
+  -destination 'platform=iOS Simulator,name=iPhone 16'
+```
+
+`swift test` alone won't work for the package: it builds for macOS, and the package targets iOS.
+
+## How it's organized
+
+| Path | What it is |
+|---|---|
+| `Shimbashi/` | The SwiftUI app: conversation screen, onboarding, settings, persistence (SwiftData), and the text and speech clients |
+| `Packages/VoiceCore/` | A Swift package with the realtime voice stack: audio engine, Gemini Live WebSocket transport, reconnection, and session state |
+| `docs/` | Privacy policy and App Store submission material |
+| `NOTES.md` | Developer notes: architecture, past bugs, and traps worth knowing |
+
+Models used (all on Google's free tier): `gemini-3.8-live` for the conversation, `gemini-3.5-flash-lite`
+(falling back to `gemini-3.6-flash`) for translation and breakdowns, and `gemini-3.8-flash-tts`
+(falling back to `gemini-3.8-flash-lite-tts`) for replaying phrases.
